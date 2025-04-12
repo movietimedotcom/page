@@ -1,0 +1,144 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: auto;
+    overflow: scroll;
+    overflow-x: auto;
+    overflow-y: auto;
+    /* overflow-y: auto;
+    overflow-x: auto; */
+  }
+
+            .container1 {
+          left :auto;
+          right: auto;
+          background-color: black;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+          text-align: center;
+          }
+
+          .container2 {
+            left :auto;
+            background-color: black;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            }
+ 
+            .container3 {
+              left :auto;
+              background-color: black;
+              padding: 20px;
+              border-radius: 10px;
+              box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+              text-align: center;
+              }
+  
+              .container4 {
+                left :auto;
+                background-color: black;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                }
+
+                .container5 {
+                  left :auto;
+                  background-color: black;
+                  padding: 20px;
+                  border-radius: 10px;
+                  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                  text-align: center;
+                  }
+  h1 {
+    margin-bottom: 20px;
+  }
+  
+  .video {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .download-container {
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  .download-button {
+    display: inline-block;
+    padding: 10px 20px;
+    color: #fff;
+    background-color: #007bff;
+    text-decoration: none;
+    border-radius: 5px;
+  }
+  
+  .download-button:hover {
+    background-color: #0056b3;
+  }
+
+  #header-nav {
+    position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  z-index: 99999;
+}
+.navbar {
+    border-radius:0px;
+}
+
+
+.navbar-default .navbar-collapse, .navbar-default .navbar-form {
+    background-color:#000000;
+    border-color:#FFA500;
+}
+.navbar-default .navbar-brand {
+  margin-left: 30px;
+  margin-right:50px;
+  height: 56px;
+  font-size: 25px;
+font-weight: 900;
+color:#FFFFFF;
+ 
+}
+.navbar-default {
+     background-color:black;
+    border-color:black;
+}
+
+.navbar-default:hover .navbar-brand:hover {
+ 
+color:black;
+}
+
+.navbar-default .navbar-nav > li > a {
+  padding: 20px 10px;
+  font-size: 16px;
+  line-height: 17px;
+  color:#fff;
+ 
+ 
+}
+.navbar-default .navbar-nav > li > a:hover{
+  padding: 20px 10px;
+  font-size: 16px;
+  line-height: 17px;
+  color:#fff;
+ 
+}
+.navbar-default .navbar-nav > li > a > i {
+  display: inline-block;
+}
