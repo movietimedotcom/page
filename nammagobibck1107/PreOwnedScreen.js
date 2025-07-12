@@ -343,6 +343,6 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
   modalInput: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 8, marginBottom: 10, backgroundColor: '#f9f9f9' },
   pickerWrapper: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 10, backgroundColor: '#f9f9f9', overflow: 'hidden' },
-  cancelBtn: { padding: 10, backgroundColor: '#e1e1e1', borderRadius: 8, alignItems: 'center' },
-  submitBtn: { padding: 10, backgroundColor: '#25D366', borderRadius: 8, flex: 1, alignItems: 'center' },
+  cancelBtn: { padding: 10, backgroundColor: '#e1e1e1', borderRadius: 8, alignItems: 'center', width:75 },
+  submitBtn: { paddingVertical: 8, paddingHorizontal: 10, backgroundColor: '#25D366', borderRadius: 6, alignItems: 'center', width: 250},
 });
