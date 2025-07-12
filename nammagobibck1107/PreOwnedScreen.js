@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, Image, StyleSheet, Dimensions, TouchableOpacity,
-  ActivityIndicator, TextInput, ScrollView, Linking, FlatList
+  ActivityIndicator, TextInput, ScrollView, Linking, Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Picker } from '@react-native-picker/picker';
 import { ref, onValue } from 'firebase/database';
 import { db } from '../firebase/firebase';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +21,10 @@ export default function PreOwnedScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [adminWhatsapp, setAdminWhatsapp] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({ name: '', price: '', category: '', description: '' });
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   const carouselRef = useRef(null);
   const navigation = useNavigation();
@@ -38,7 +43,9 @@ export default function PreOwnedScreen() {
     const categoriesRef = ref(db, 'preowned/categories');
     return onValue(categoriesRef, snapshot => {
       const data = snapshot.val();
-      setCategories(data ? Object.values(data) : []);
+      const list = data ? Object.values(data) : [];
+      setCategories(list);
+      setCategoryOptions(list.map(cat => cat.title));
     });
   }, []);
 
@@ -79,10 +86,54 @@ export default function PreOwnedScreen() {
     );
   });
 
-  const keywordSuggestions = filteredProducts.slice(0, 5);
+  const getUniqueSuggestions = () => {
+    const query = search.toLowerCase();
+    const wordSet = new Set();
+    const results = [];
+
+    for (const item of products) {
+      if (item.name?.toLowerCase().includes(query)) {
+        const words = item.name.toLowerCase().split(' ');
+        words.forEach(word => {
+          if (word.includes(query) && !wordSet.has(word)) {
+            wordSet.add(word);
+            results.push(word);
+          }
+        });
+      }
+
+      if (item.category?.toLowerCase().includes(query) && !wordSet.has(item.category.toLowerCase())) {
+        wordSet.add(item.category.toLowerCase());
+        results.push(item.category);
+      }
+
+      if (item.description?.toLowerCase().includes(query)) {
+        const words = item.description.toLowerCase().split(' ');
+        words.forEach(word => {
+          if (word.includes(query) && !wordSet.has(word)) {
+            wordSet.add(word);
+            results.push(word);
+          }
+        });
+      }
+
+      if (results.length >= 5) break;
+    }
+
+    return results.slice(0, 5);
+  };
+
+  const keywordSuggestions = getUniqueSuggestions();
 
   const openWhatsApp = number => Linking.openURL(`https://wa.me/${number}`);
   const makeCall = number => Linking.openURL(`tel:${number}`);
+
+  const handleSendRequest = () => {
+    const message = `🛒 *New Product Request*\n\n📦 Name: ${form.name}\n💰 Price: ₹${form.price}\n📂 Category: ${form.category}\n📝 Description: ${form.description}`;
+    Linking.openURL(`https://wa.me/${adminWhatsapp}?text=${encodeURIComponent(message)}`);
+    setShowModal(false);
+    setForm({ name: '', price: '', category: '', description: '' });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -97,48 +148,29 @@ export default function PreOwnedScreen() {
           }}
         />
 
-        {/* 🔍 Keyword Suggestions */}
         {search.length > 0 && showSuggestions && keywordSuggestions.length > 0 && (
           <View style={styles.suggestionBox}>
-            {keywordSuggestions.map((item, index) => {
-              const query = search.toLowerCase();
-              const nameMatch = item.name?.toLowerCase().includes(query);
-              const categoryMatch = item.category?.toLowerCase().includes(query);
-              const descMatch = item.description?.toLowerCase().includes(query);
-
-              let matchedWord = '';
-
-              if (nameMatch) {
-                matchedWord = item.name.split(' ').find(word => word.toLowerCase().includes(query)) || item.name;
-              } else if (categoryMatch) {
-                matchedWord = item.category.split(' ').find(word => word.toLowerCase().includes(query)) || item.category;
-              } else if (descMatch) {
-                matchedWord = item.description.split(' ').find(word => word.toLowerCase().includes(query)) || item.description;
-              }
-
-              return (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => {
-  setShowSuggestions(false);
-  navigation.navigate('PreOwnedListScreen', {
-    category: 'Search',
-    searchQuery: matchedWord
-  });
-}}
-
-                  style={styles.suggestionItem}
-                >
-                  <Text>{matchedWord}</Text>
-                </TouchableOpacity>
-              );
-            })}
+            {keywordSuggestions.map((suggestion, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => {
+                  setShowSuggestions(false);
+                  navigation.navigate('PreOwnedListScreen', {
+                    category: 'Search',
+                    searchQuery: suggestion
+                  });
+                }}
+                style={styles.suggestionItem}
+              >
+                <Text>{suggestion}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
         <Text style={styles.sectionTitle}>Browse Categories</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer} contentContainerStyle={styles.categoriesScroll}>
-          {categories.slice(0, 10).map((item, i) => (
+          {categories.slice(0, 5).map((item, i) => (
             <TouchableOpacity key={i} style={styles.categoryItem} onPress={() => navigation.navigate('PreOwnedListScreen', { category: item.title })}>
               <View style={styles.iconWrapper}>
                 <Image source={{ uri: item.icon }} style={styles.categoryIcon} />
@@ -146,6 +178,14 @@ export default function PreOwnedScreen() {
               <Text style={styles.categoryText}>{item.title}</Text>
             </TouchableOpacity>
           ))}
+          {categories.length > 5 && (
+            <TouchableOpacity style={styles.categoryItem} onPress={() => setShowAllCategories(true)}>
+              <View style={[styles.iconWrapper, { backgroundColor: '#ddd' }]}>
+                <Ionicons name="grid-outline" size={30} color="#333" />
+              </View>
+              <Text style={styles.categoryText}>All</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
 
         <ScrollView
@@ -209,6 +249,66 @@ export default function PreOwnedScreen() {
           </View>
         )}
       </ScrollView>
+
+      <TouchableOpacity style={styles.fab} onPress={() => setShowModal(true)}>
+        <Ionicons name="add" size={28} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Request Modal */}
+      <Modal visible={showModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Request to Add Product</Text>
+            <TextInput placeholder="Product Name" value={form.name} onChangeText={t => setForm({ ...form, name: t })} style={styles.modalInput} />
+            <TextInput placeholder="Price" value={form.price} onChangeText={t => setForm({ ...form, price: t })} keyboardType="numeric" style={styles.modalInput} />
+            <View style={styles.pickerWrapper}>
+              <Picker selectedValue={form.category} onValueChange={(itemValue) => setForm({ ...form, category: itemValue })}>
+                <Picker.Item label="Select Category" value="" />
+                {categoryOptions.map((cat, index) => (
+                  <Picker.Item key={index} label={cat} value={cat} />
+                ))}
+              </Picker>
+            </View>
+            <TextInput placeholder="Description" value={form.description} onChangeText={t => setForm({ ...form, description: t })} multiline style={[styles.modalInput, { height: 60 }]} />
+            <Text style={{ fontSize: 12, color: '#888', marginBottom: 10 }}>📷 Send image separately on WhatsApp after submitting</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <TouchableOpacity onPress={() => setShowModal(false)} style={styles.cancelBtn}>
+                <Text style={{ color: '#333' }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSendRequest} style={styles.submitBtn}>
+                <Text style={{ color: '#fff' }}>Send via WhatsApp</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* All Categories Modal */}
+      <Modal visible={showAllCategories} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContainer, { maxHeight: '70%' }]}>
+            <Text style={styles.modalTitle}>All Categories</Text>
+            <ScrollView>
+              {categories.map((item, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 8 }}
+                  onPress={() => {
+                    setShowAllCategories(false);
+                    navigation.navigate('PreOwnedListScreen', { category: item.title });
+                  }}
+                >
+                  <Image source={{ uri: item.icon }} style={{ width: 40, height: 40, borderRadius: 20, marginRight: 10 }} />
+                  <Text style={{ fontSize: 16 }}>{item.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity onPress={() => setShowAllCategories(false)} style={[styles.cancelBtn, { marginTop: 10 }]}>
+              <Text style={{ color: '#333', textAlign: 'center' }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -237,4 +337,12 @@ const styles = StyleSheet.create({
   buttonRow: { flexDirection: 'row', marginTop: 8, gap: 10 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e9e9e9', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 6 },
   btnText: { marginLeft: 6, fontSize: 13, color: '#333' },
+  fab: { position: 'absolute', right: 20, bottom: 20, backgroundColor: '#007bff', width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', elevation: 5, zIndex: 10 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContainer: { backgroundColor: '#fff', width: '100%', padding: 20, borderRadius: 12 },
+  modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12, textAlign: 'center' },
+  modalInput: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 8, marginBottom: 10, backgroundColor: '#f9f9f9' },
+  pickerWrapper: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, marginBottom: 10, backgroundColor: '#f9f9f9', overflow: 'hidden' },
+  cancelBtn: { padding: 10, backgroundColor: '#e1e1e1', borderRadius: 8, alignItems: 'center' },
+  submitBtn: { padding: 10, backgroundColor: '#25D366', borderRadius: 8, flex: 1, alignItems: 'center' },
 });
